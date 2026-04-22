@@ -2,26 +2,43 @@ import cv2
 import numpy as np
 from utilidades import eliminar_repetidos_nms
 
-
+'''
+Creamos una clase DetectorPanles para encapsular todo el sistema
+Esta clase tiene un método final detectar() que llama a todas las funciones que necesita
+'''
 class DetectorPaneles:
+    #Constructor de la clase DetectorPaneles
     def __init__(self):
-        # --- PLAN A: MSER CLÁSICO (Versión Oro) ---
+        '''
+        Algoritmo MSER:
+        Buscamos regiones estables dentro de la imagen porque los paneles
+        tienen una zona azul homogéne que contrasta respecto al borde y el fondo
+        '''
         self.mser = cv2.MSER_create(delta=5, min_area=600, max_area=90000)
         self.tamano_base = (80, 40)
         self.lower_blue = np.array([100, 130, 40])
         self.upper_blue = np.array([140, 255, 255])
 
     def buscar_rectangulos_grandes(self, imagen):
-        """PLAN B: Paneles gigantes y borrosos (Canny sensible + Contornos + Extent)"""
+        """
+        Algoritmo alternativo al MSER:
+        Pensado para cuando el panel es muy grande, el texto o imágen está borroso o tiene niebla.
+        Se basa en:
+        - Bordes
+        - Contornos
+        """
         detecciones_extra = []
         alto_img, ancho_img = imagen.shape[:2]
 
         gray = cv2.cvtColor(imagen, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(gray, (5, 5), 0)
 
+        #saca bordes
         bordes = cv2.Canny(blur, 30, 100)
+        #saca contornos cerrados sobre esos bordes
         contornos, _ = cv2.findContours(bordes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
+        #descartamos contornos demasiado pequeños
         for cnt in contornos:
             area = cv2.contourArea(cnt)
             if area > 4000:
@@ -50,7 +67,14 @@ class DetectorPaneles:
         return detecciones_extra
 
     def buscar_paneles_niebla(self, imagen):
-        """PLAN C: Paneles en niebla (Densidad sólida + Extent)"""
+        """
+        Algoritmo alternativo a MSER:
+        Lo usamos para casos difíciles:
+        - Niebla
+        - Poca saturación
+        - Paneles lavados de color
+        - Situaciones donde MSER y el azul estricto fallan
+        """
         detecciones_niebla = []
         alto_img, ancho_img = imagen.shape[:2]
 
