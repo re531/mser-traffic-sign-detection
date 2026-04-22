@@ -190,7 +190,7 @@ def load_results_file(file_name, test_path, load_images=False):
                 bboxes[row[0]] = []
 
             bboxes[row[0]].append(bb)
-            
+
     return (images, bboxes)
 
 # --------------------------------------------------------------------------------------------------------
@@ -324,7 +324,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Plots the results of a homework')
     parser.add_argument(
-        '--test_path', default="", help='Select the testing data dir')
+        '--test_path', default="test_detection", help='Select the testing data dir')
     parser.add_argument(
         '--detections_file', default="resultado.txt", help='Select the detections results file')
     parser.add_argument(
@@ -375,7 +375,7 @@ if __name__ == "__main__":
     plt.ylabel("Precision")
     plt.title("Comparación con práctica profesores (IoU>0.5)")
     plt.legend
-    
+
     # --------------------------------------------------------------------------------------------
     #  Figure with overlap (IoU) theshold of 0.7 (>=70% overlap is considered a correct detection)
     # --------------------------------------------------------------------------------------------
