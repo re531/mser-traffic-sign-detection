@@ -3,6 +3,7 @@ import os
 import cv2
 from detector_paneles import DetectorPaneles
 
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
