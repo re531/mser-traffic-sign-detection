@@ -1,0 +1,17 @@
+[project]
+name = "mser-traffic-sign-detection"
+version = "0.1.0"
+description = "Detector de paneles de tráfico usando MSER y HSV"
+authors = [
+    { name = "Tu Nombre" }
+]
+requires-python = ">=3.9"
+
+dependencies = [
+    "opencv-python>=4.8.0",
+    "numpy>=1.23",
+    "matplotlib>=3.9.4",
+]
+
+[tool.uv]
+# opcional si estás usando uv (como en tu caso)
