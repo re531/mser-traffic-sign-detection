@@ -10,9 +10,9 @@ if __name__ == "__main__":
     parser.add_argument(
         '--detector', type=str, nargs="?", default="", help='Detector string name')
     parser.add_argument(
-        '--train_path', default="", help='Select the training data dir')
+        '--train_path', default="train_detection", help='Select the training data dir')
     parser.add_argument(
-        '--test_path', default="", help='Select the testing data dir')
+        '--test_path', default="test_detection", help='Select the testing data dir')
 
     args = parser.parse_args()
 
