@@ -20,9 +20,8 @@ if __name__ == "__main__":
     # ==========================================
     # Load training data
     # ==========================================
-    # Nota: Con algoritmos clásicos (MSER, HSV) no entrenamos un modelo.
-    # Podrías usar esta sección para cargar recortes del 'train_path' y 
-    # extraer el color azul ideal dinámicamente si quisieras automatizarlo.
+    # En este detector no se realiza entrenamiento, pero se mantiene el argumento
+    # train_path para respetar la interfaz indicada en el enunciado.
     print(f"Directorio de entrenamiento: {args.train_path}")
 
     # ==========================================
@@ -46,18 +45,18 @@ if __name__ == "__main__":
     # ==========================================
     # Evaluate detections
     # ==========================================
-    # 1. Crear la carpeta para guardar las imágenes resultantes
+    # Carpeta de salida para las imágenes procesadas
     dir_resultados_imgs = "resultado_imgs"
     if not os.path.exists(dir_resultados_imgs):
         os.makedirs(dir_resultados_imgs)
 
-    # 2. Abrir el archivo de texto donde guardaremos los resultados
+    # Archivo de salida con las detecciones
     ruta_resultado_txt = "resultado.txt"
     f_txt = open(ruta_resultado_txt, "w")
 
     print("\nProcesando detecciones...")
     
-    # 3. Bucle principal sobre cada imagen
+    # Procesamiento de las imágenes de test
     for nombre_img in imagenes_test:
         ruta_img = os.path.join(args.test_path, nombre_img)
         img = cv2.imread(ruta_img)
@@ -65,19 +64,19 @@ if __name__ == "__main__":
         if img is None:
             continue
 
-        # Llamada a nuestra clase detectora
+        # Obtención de detecciones
         detecciones = detector.detectar(img)
 
-        # Dibujar cajas y escribir en el txt
+        # Dibujo de la caja y de la puntuación asociada
         for det in detecciones:
             x1, y1, x2, y2 = det['box']
             score = det['score']
 
-            # Formato estricto: <nombre_fichero>;<x1>;<y1>;<x2>;<y2>;<tipo>;<score>
+            # Formato: <nombre_fichero>;<x1>;<y1>;<x2>;<y2>;<tipo>;<score>
             linea_txt = f"{nombre_img};{x1};{y1};{x2};{y2};1;{score:.3f}\n"
             f_txt.write(linea_txt)
 
-            # Requisito: Cuadrado rojo (0,0,255 en BGR) y texto amarillo (0,255,255)
+            # Cuadrado rojo (0,0,255 en BGR) y texto amarillo (0,255,255)
             cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
             cv2.putText(img, f"{score:.2f}", (x1, y1 - 10), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
@@ -87,6 +86,5 @@ if __name__ == "__main__":
         cv2.imwrite(ruta_guardado, img)
         print(f" -> {nombre_img}: {len(detecciones)} paneles encontrados.")
 
-    # Cerrar archivo de texto al terminar
     f_txt.close()
     print(f"\n¡Proceso completado! Archivo '{ruta_resultado_txt}' generado y guardado.")

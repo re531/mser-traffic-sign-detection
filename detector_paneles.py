@@ -3,16 +3,14 @@ import numpy as np
 from utilidades import eliminar_repetidos_nms
 
 '''
-Creamos una clase DetectorPanles para encapsular todo el sistema
-Esta clase tiene un método final detectar() que llama a todas las funciones que necesita
+Detector de paneles basado en regiones de MSER, color HSV y filtros geométricos.
 '''
 class DetectorPaneles:
     #Constructor de la clase DetectorPaneles
     def __init__(self):
         '''
-        Algoritmo MSER:
-        Buscamos regiones estables dentro de la imagen porque los paneles
-        tienen una zona azul homogéne que contrasta respecto al borde y el fondo
+        Inicialización de parámetros del detectr
+        MSER se utiliza para localizar regiones estbales con alto contraste.
         '''
         self.mser = cv2.MSER_create(delta=5, min_area=600, max_area=90000)
         self.tamano_base = (80, 40)
@@ -33,12 +31,11 @@ class DetectorPaneles:
         gray = cv2.cvtColor(imagen, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(gray, (5, 5), 0)
 
-        #saca bordes
+        # Detección de bordes y extracción de contornos externos
         bordes = cv2.Canny(blur, 30, 100)
-        #saca contornos cerrados sobre esos bordes
         contornos, _ = cv2.findContours(bordes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        #descartamos contornos demasiado pequeños
+        # descartamos contornos demasiado pequeños
         for cnt in contornos:
             area = cv2.contourArea(cnt)
             if area > 4000:
@@ -103,13 +100,12 @@ class DetectorPaneles:
                     relacion_aspecto = w / float(h)
 
                     if 0.8 < relacion_aspecto < 3.5:
-                        # SOLUCIÓN NUBES: Obligamos a comprobar la densidad real de la máscara
-                        # en lugar de regalar el score. Si la caja está hueca por dentro (nube), la rechaza.
+                        # Comprobación de densidad para descartar regiones poco compactas (Solución al problema de las nubes)
                         roi_mask = mask[y:y + h, x:x + w]
                         densidad_solida = cv2.countNonZero(roi_mask) / float(w * h)
 
                         if densidad_solida > 0.50:
-                            # Le asignamos la densidad real como score
+                            # La densidad de la máscara se usa como puntuación
                             detecciones_niebla.append({
                                 'box': [x, y, x + w, y + h],
                                 'score': densidad_solida
@@ -127,12 +123,11 @@ class DetectorPaneles:
         detecciones_iniciales = []
         alto_img, ancho_img = imagen.shape[:2]
 
-        # --- PLAN A: MSER CLÁSICO ---
+        # Detección principal mediante MSER
         for region in regiones:
             x, y, w, h = cv2.boundingRect(region)
 
-            # SOLUCIÓN SALPICADERO: Subimos el suelo de descarte.
-            # Ignora cualquier cosa que asome por debajo del 65% de la pantalla.
+            # Se descartan regiones situadas en la parte inferior de la imagen (Solucionamos problema del capó)
             if y > alto_img * 0.65:
                 continue
 
@@ -162,13 +157,13 @@ class DetectorPaneles:
                         'score': score
                     })
 
-        # --- RECOPILACIÓN DE PLANES ---
+        # Combinación de detecciones obtenidas con distintos criterios
         detecciones_extra = self.buscar_rectangulos_grandes(imagen)
         detecciones_niebla = self.buscar_paneles_niebla(imagen)
 
         detecciones_totales = detecciones_iniciales + detecciones_extra + detecciones_niebla
 
-        # --- LIMPIEZA FINAL NMS ---
+        # Eliminación de detecciones solapadas
         detecciones_finales = eliminar_repetidos_nms(detecciones_totales, umbral_iou=0.2, umbral_contencion=0.6)
 
         return detecciones_finales
